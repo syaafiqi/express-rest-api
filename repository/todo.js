@@ -46,7 +46,8 @@ exports.create = (req, res) => {
 
   const todo = {
     title: req.body.title,
-    email: req.body.email
+    activity_group_id: req.body.activity_group_id,
+    is_active: false
   };
 
   Todo.create(todo)
