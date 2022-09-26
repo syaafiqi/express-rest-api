@@ -10,17 +10,13 @@ const bodyParser = require('body-parser')
 const dbConnection = require('./model')
 const statusCode = require('./constants/statusCode')
 const utility = require('./helpers/utility.js')
+const http = require('http');
 app.use(cors())
+
+http.globalAgent.maxSockets = Infinity;
 
 // Check the number of available CPU.
 const numCPUs = require('os').cpus().length;
-
-// Sync DB
-dbConnection.sequelize.sync().then(() => {
-    console.log('Sync DB to ' + process.env.MYSQL_HOST + ':' + process.env.MYSQL_PORT + ' Completed')
-}).catch((err) => {
-    console.log('Sync DB to ' + process.env.MYSQL_HOST + ':' + process.env.MYSQL_PORT + ' Failed : ' + err.message)
-});
 
 app.use(utility.AssignId)
 app.use(bodyParser.json())
@@ -42,12 +38,19 @@ app.all("*", function (req, res) {
 if (cluster.isMaster) {
   console.log(`Master ${process.pid} is running`);
   
+  // Sync DB
+  dbConnection.sequelize.sync().then(() => {
+    console.log('Sync DB to ' + process.env.MYSQL_HOST + ':' + process.env.MYSQL_PORT + ' Completed')
+  }).catch((err) => {
+    console.log('Sync DB to ' + process.env.MYSQL_HOST + ':' + process.env.MYSQL_PORT + ' Failed : ' + err.message)
+  });
+  
   // Fork workers.
   for (let i = 0; i < numCPUs; i++) {
     cluster.fork();
   }
   
-  // This event is firs when worker died
+  // This event is fires when worker died
   cluster.on('exit', (worker, code, signal) => {
     console.log(`worker ${worker.process.pid} died`);
   });
