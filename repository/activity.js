@@ -1,17 +1,17 @@
 const db = require("../model");
+const statusCode = require("../constants/statusCode");
+const status = require("../constants/statusMessage");
+const { GiveResponse } = require("../helpers/utility");
 const Activity = db.Activity;
 const Op = db.Sequelize.Op;
 
 exports.findAll = (req, res) => {
   Activity.findAll()
     .then(data => {
-      res.send(data);
+      res.send(GiveResponse(status.success, status.success, data));
     })
     .catch(err => {
-      res.status(500).send({
-        message:
-          err.message || "Some error occurred while retrieving data."
-      });
+      res.status(statusCode.internalServerError).send(GiveResponse(status.internalServerError, err.message));
     });
 };
 
@@ -21,26 +21,20 @@ exports.findOne = (req, res) => {
   Activity.findByPk(id)
     .then(data => {
       if (data) {
-        res.send(data);
+        res.send(GiveResponse(status.success, status.success, data));
       } else {
-        res.status(404).send({
-          message: `Cannot find data with id=${id}.`
-        });
+        res.status(statusCode.notFound).send(GiveResponse(status.notFound, `Activity with ID ${id} Not Found`));
       }
     })
     .catch(err => {
-      res.status(500).send({
-        message: "Error retrieving data with id=" + id
-      });
+      res.status(statusCode.internalServerError).send(GiveResponse(status.internalServerError, "Error retrieving data with id=" + id));
     });
 };
 
 exports.create = (req, res) => {
   // Validate request
   if (!req.body.title) {
-    res.status(400).send({
-      message: "Title can not be empty!"
-    });
+    res.status(statusCode.badRequest).send(GiveResponse(status.badRequest, "title cannot be null"));
     return;
   }
 
@@ -51,59 +45,49 @@ exports.create = (req, res) => {
 
   Activity.create(activity)
     .then(data => {
-      res.send(data);
+      res.send(GiveResponse(status.success, status.success, data));
     })
     .catch(err => {
-      res.status(500).send({
-        message:
-          err.message || "Some error occurred while creating the data."
-      });
+      res.status(statusCode.internalServerError).send(GiveResponse(status.internalServerError, "Error retrieving data with id=" + id));
     });
 };
 
-exports.update = (req, res) => {
+exports.update = async (req, res) => {
   const id = req.params.id;
 
-  Activity.update(req.body, {
-    where: { id: id }
-  }).then(num => {
-      if (num == 1) {
-        res.send({
-          message: "Data was updated successfully."
-        });
-      } else {
-        res.send({
-          message: `Cannot update Data with id=${id}. Maybe Data was not found or req.body is empty!`
-        });
-      }
+  if (!req.body.title) {
+    res.status(statusCode.badRequest).send(GiveResponse(status.badRequest, "title cannot be null"));
+    return
+  }
+
+  const data = await Activity.findByPk(id)
+  if (!data) {
+    res.status(statusCode.notFound).send(GiveResponse(status.notFound, `Activity with ID ${id} Not Found`));
+    return
+  }
+
+  data.update(Object.assign(req.body, { updatedAt: Date() })).then(result => {
+      res.send(GiveResponse(status.success, status.success, result));
     })
     .catch(err => {
-      res.status(500).send({
-        message: "Error updating Data with id=" + id
-      });
+      res.status(statusCode.internalServerError).send(GiveResponse(status.internalServerError, "Error retrieving data with id=" + id));
     });
 };
 
-exports.delete = (req, res) => {
+exports.delete = async (req, res) => {
   const id = req.params.id;
 
-  Activity.destroy({
-    where: { id: id }
-  })
-    .then(num => {
-      if (num == 1) {
-        res.send({
-          message: "Data was deleted successfully!"
-        });
-      } else {
-        res.send({
-          message: `Cannot delete Data with id=${id}. Maybe Data was not found!`
-        });
-      }
+  const data = await Activity.findByPk(id)
+  if (!data) {
+    res.status(statusCode.notFound).send(GiveResponse(status.notFound, `Activity with ID ${id} Not Found`));
+    return
+  }
+
+  data.destroy()
+    .then(() => {
+      res.send(GiveResponse(status.success, status.success));
     })
     .catch(err => {
-      res.status(500).send({
-        message: "Could not delete Data with id=" + id
-      });
+      res.status(statusCode.internalServerError).send(GiveResponse(status.internalServerError, "Error retrieving data with id=" + id));
     });
 };
