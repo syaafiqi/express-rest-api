@@ -8,6 +8,7 @@ module.exports = {
     host: MYSQL_HOST,
     port: MYSQL_PORT,
     dialect: "mysql",
+    logging: false
   },
   test: {
     username: MYSQL_USER,
@@ -15,6 +16,7 @@ module.exports = {
     database: MYSQL_DBNAME,
     host: MYSQL_HOST,
     dialect: "mysql",
+    logging: false
   },
   production: {
     username: MYSQL_USER,
@@ -22,5 +24,6 @@ module.exports = {
     database: MYSQL_DBNAME,
     host: MYSQL_HOST,
     dialect: "mysql",
+    logging: false
   },
 };
