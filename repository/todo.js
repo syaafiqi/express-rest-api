@@ -9,7 +9,7 @@ exports.findAll = (req, res) => {
   const query = {}
   const { activity_group_id } = req.query
   if (activity_group_id) {
-    query[where] = {
+    query["where"] = {
       activity_group_id: activity_group_id
     }
   }
@@ -45,7 +45,7 @@ exports.create = (req, res) => {
     return;
   }
   if (!req.body.activity_group_id) {
-    res.status(statusCode.badRequest).send(GiveResponse(status.badRequest, "activity group cannot be null"));
+    res.status(statusCode.badRequest).send(GiveResponse(status.badRequest, "activity_group_id cannot be null"));
     return;
   }
 
@@ -58,7 +58,7 @@ exports.create = (req, res) => {
 
   Todo.create(todo)
     .then(data => {
-      res.send(GiveResponse(status.success, status.success, data));
+      res.status(statusCode.created).send(GiveResponse(status.success, status.success, data));
     })
     .catch(err => {
       res.status(statusCode.internalServerError).send(GiveResponse(status.internalServerError, "Error retrieving data with id=" + id));
@@ -68,10 +68,14 @@ exports.create = (req, res) => {
 exports.update = async (req, res) => {
   const id = req.params.id;
 
-  if (!req.body.title) {
-    res.status(statusCode.badRequest).send(GiveResponse(status.badRequest, "title cannot be null"));
-    return
-  }
+  // if (!req.body.title) {
+  //   res.status(statusCode.badRequest).send(GiveResponse(status.badRequest, "title cannot be null"));
+  //   return;
+  // }
+  // if (!req.body.activity_group_id) {
+  //   res.status(statusCode.badRequest).send(GiveResponse(status.badRequest, "activity_group_id cannot be null"));
+  //   return;
+  // }
 
   const data = await Todo.findByPk(id)
   if (!data) {

@@ -45,7 +45,7 @@ exports.create = (req, res) => {
 
   Activity.create(activity)
     .then(data => {
-      res.send(GiveResponse(status.success, status.success, data));
+      res.status(statusCode.created).send(GiveResponse(status.success, status.success, data));
     })
     .catch(err => {
       res.status(statusCode.internalServerError).send(GiveResponse(status.internalServerError, "Error retrieving data with id=" + id));

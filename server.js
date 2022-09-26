@@ -2,6 +2,7 @@ require('dotenv').config()
 require('express-group-routes')
 const fs = require('fs')
 const express = require('express')
+const cluster = require('cluster');
 const cors = require('cors')
 const app = express()
 const routes = require('./config/routes.js')
@@ -10,6 +11,9 @@ const dbConnection = require('./model')
 const statusCode = require('./constants/statusCode')
 const utility = require('./helpers/utility.js')
 app.use(cors())
+
+// Check the number of available CPU.
+const numCPUs = require('os').cpus().length;
 
 // Sync DB
 dbConnection.sequelize.sync().then(() => {
@@ -33,6 +37,27 @@ app.group('/', (router) => {
 app.all("*", function (req, res) {
     return res.send(utility.GiveResponse(statusCode.notFound, 'NOT FOUND'));
 });
-app.listen(process.env.PORT || 3000, function () {
-    console.log(process.env.APPNAME + ' running at http://' + process.env.HOSTNAME + ':' + process.env.PORT + '')
-})
+
+// For Master process
+if (cluster.isMaster) {
+  console.log(`Master ${process.pid} is running`);
+  
+  // Fork workers.
+  for (let i = 0; i < numCPUs; i++) {
+    cluster.fork();
+  }
+  
+  // This event is firs when worker died
+  cluster.on('exit', (worker, code, signal) => {
+    console.log(`worker ${worker.process.pid} died`);
+  });
+}
+// For Worker
+else{
+  
+  // Workers can share any TCP connection
+  // In this case it is an HTTP server
+  app.listen(process.env.PORT || 3000, function () {
+      console.log(process.env.APPNAME + ' running at http://' + process.env.HOSTNAME + ':' + process.env.PORT + '')
+  })
+}

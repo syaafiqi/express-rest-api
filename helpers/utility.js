@@ -1,7 +1,7 @@
 const uuid = require('uuid');
 
 module.exports = {
-    GiveResponse: function (status, message, data = null) {
+    GiveResponse: function (status, message, data = {}) {
         return {
             status,
             message,
